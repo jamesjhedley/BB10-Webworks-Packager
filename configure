@@ -7,6 +7,6 @@ npm install
 if [[ "$1" != "-scm" || "$1" != "-ci" ]]; then
     git submodule update --init
     cd ./Framework
-    ./configure
+    source configure
     jake
 fi
