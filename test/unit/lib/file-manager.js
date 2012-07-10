@@ -13,7 +13,7 @@ var srcPath = __dirname + "/../../../lib/",
         getAllExtensionsToCopy: function (accessList) {
             return ["app"];
         },
-        getFeatureIdByExtBasename: function (extBasename) {
+        getFeatureIdByExtensionBasename: function (extBasename) {
             return "blackberry." + extBasename;
         }
     };
