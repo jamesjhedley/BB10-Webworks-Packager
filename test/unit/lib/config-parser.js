@@ -7,7 +7,16 @@ var testData = require("./test-data"),
     localize = require(testData.libPath + "/localize"),
     path = require("path"),
     session = testData.session,
-    configPath = path.resolve("test/config.xml");
+    configPath = path.resolve("test/config.xml"),
+    extManager = {
+        getGlobalFeatures: function () {
+            return [{
+                id: "blackberry.event",
+                version: "1.0.0.0",
+                require: true
+            }];
+        }
+    };
     
 function mockParsing(data, error) {
     spyOn(xml2js, "Parser").andReturn({
@@ -20,7 +29,7 @@ function mockParsing(data, error) {
 
 describe("config parser", function () {
     it("parses standard elements in a config.xml", function () {
-        configParser.parse(configPath, session, function (configObj) {
+        configParser.parse(configPath, session, extManager, function (configObj) {
             expect(configObj.content).toEqual("local:///startPage.html");
             expect(configObj.id).toEqual("My WidgetId");
             expect(configObj.version).toEqual("1.0.0");
@@ -44,7 +53,7 @@ describe("config parser", function () {
         var localAccessList,
             accessListFeature;
 
-        configParser.parse(configPath, session, function (configObj) {
+        configParser.parse(configPath, session, extManager, function (configObj) {
             //validate WIDGET_LOCAL accessList
             localAccessList = testUtilities.getAccessListForUri(configObj.accessList, "WIDGET_LOCAL");
             expect(localAccessList).toBeDefined();
@@ -71,7 +80,7 @@ describe("config parser", function () {
         var customAccessList,
             accessListFeature;
 
-        configParser.parse(configPath, session, function (configObj) {
+        configParser.parse(configPath, session, extManager, function (configObj) {
             //validate http://www.somedomain1.com accessList
             customAccessList = testUtilities.getAccessListForUri(configObj.accessList, "http://www.somedomain1.com");
             expect(customAccessList).toBeDefined();
@@ -97,7 +106,7 @@ describe("config parser", function () {
     it("parses a bare minimum config.xml without error", function () {
         var bareMinimumConfigPath = path.resolve("test/config-bare-minimum.xml");
 
-        configParser.parse(bareMinimumConfigPath, session, function (configObj) {
+        configParser.parse(bareMinimumConfigPath, session, extManager, function (configObj) {
             expect(configObj.content).toEqual("local:///startPage.html");
             expect(configObj.version).toEqual("1.0.0");
         });
@@ -106,7 +115,7 @@ describe("config parser", function () {
     it("license url is set even if license body is empty", function () {
         var licenseConfigPath = path.resolve("test/config-license.xml");
 
-        configParser.parse(licenseConfigPath, session, function (configObj) {
+        configParser.parse(licenseConfigPath, session, extManager, function (configObj) {
             expect(configObj.license).toEqual("");
             expect(configObj.licenseURL).toEqual("http://www.apache.org/licenses/LICENSE-2.0");
         });
@@ -120,7 +129,7 @@ describe("config parser", function () {
         
         //Should throw an EXCEPTION_INVALID_ID error
         expect(function () {
-            configParser.parse(configPath, session, {});
+            configParser.parse(configPath, session, extManager, {});
         }).toThrow(localize.translate("EXCEPTION_INVALID_ID"));
     });
     
@@ -132,7 +141,7 @@ describe("config parser", function () {
         
         //Should throw an EXCEPTION_INVALID_ID error
         expect(function () {
-            configParser.parse(configPath, session, {});
+            configParser.parse(configPath, session, extManager, {});
         }).toThrow(localize.translate("EXCEPTION_INVALID_ID"));
     });
     
@@ -144,7 +153,7 @@ describe("config parser", function () {
         
         //Should throw an EXCEPTION_INVALID_ID error
         expect(function () {
-            configParser.parse(configPath, session, {});
+            configParser.parse(configPath, session, extManager, {});
         }).toThrow(localize.translate("EXCEPTION_INVALID_ID"));
     });
 
@@ -156,7 +165,7 @@ describe("config parser", function () {
         
         //Should throw an EXCEPTION_INVALID_ID error
         expect(function () {
-            configParser.parse(configPath, session, {});
+            configParser.parse(configPath, session, extManager, {});
         }).toThrow(localize.translate("EXCEPTION_INVALID_ID"));
     });
 
@@ -168,7 +177,7 @@ describe("config parser", function () {
         
         //Should throw an EXCEPTION_INVALID_ID error
         expect(function () {
-            configParser.parse(configPath, session, {});
+            configParser.parse(configPath, session, extManager, {});
         }).toThrow(localize.translate("EXCEPTION_INVALID_ID"));
     });
 
@@ -178,7 +187,7 @@ describe("config parser", function () {
         mockParsing(data);
         
         expect(function () {
-            configParser.parse(configPath, session, {});
+            configParser.parse(configPath, session, extManager, {});
         }).toThrow(localize.translate("EXCEPTION_INVALID_CONTENT"));
     });
     
@@ -188,7 +197,7 @@ describe("config parser", function () {
         mockParsing(data);
 
         expect(function () {
-            configParser.parse(configPath, session, {});
+            configParser.parse(configPath, session, extManager, {});
         }).toThrow(localize.translate("EXCEPTION_INVALID_FEATURE_ID"));
     });
 
@@ -199,7 +208,7 @@ describe("config parser", function () {
         
         mockParsing(data);
         
-        configParser.parse(configPath, session, function (configObj) {
+        configParser.parse(configPath, session, extManager, function (configObj) {
             expect(configObj.content).toEqual("local:///localFile.html");
         });
     });
@@ -210,7 +219,7 @@ describe("config parser", function () {
         spyOn(logger, "error");
         spyOn(fileManager, "cleanSource");
 
-        configParser.parse(configPath, session, function () {});
+        configParser.parse(configPath, session, extManager, function () {});
         
         expect(fileManager.cleanSource).toHaveBeenCalled();
     });
@@ -221,7 +230,7 @@ describe("config parser", function () {
         
         mockParsing(data);
         
-        configParser.parse(configPath, session, function (configObj) {
+        configParser.parse(configPath, session, extManager, function (configObj) {
             //access_internet permission was set
             expect(configObj.permissions).toContain('access_internet');
         });
@@ -237,11 +246,11 @@ describe("config parser", function () {
         
         mockParsing(data);
 
-        configParser.parse(configPath, session, function (configObj) {
+        configParser.parse(configPath, session, extManager, function (configObj) {
             customAccessList = testUtilities.getAccessListForUri(configObj.accessList, 'http://ci0000000094448.rim.net');
             
             //The custom access list features should only contain global features
-            expect(customAccessList.features).toEqual(configParser.getGlobalFeatures());
+            expect(customAccessList.features).toEqual(extManager.getGlobalFeatures());
         });
     });
         
@@ -252,7 +261,7 @@ describe("config parser", function () {
         mockParsing(data);
         
         expect(function () {
-            configParser.parse(configPath, session, function (configObj) {});
+            configParser.parse(configPath, session, extManager, function (configObj) {});
         }).not.toThrow();
     });
 
@@ -261,11 +270,11 @@ describe("config parser", function () {
 
         mockParsing(data);
 
-        configParser.parse(configPath, session, function (configObj) {
+        configParser.parse(configPath, session, extManager, function (configObj) {
             //hasMultiAccess was set to false
             expect(configObj.hasMultiAccess).toEqual(false);
             expect(configObj.accessList).toEqual([ {
-                features : configParser.getGlobalFeatures(),
+                features : extManager.getGlobalFeatures(),
                 uri : 'WIDGET_LOCAL',
                 allowSubDomain : true
             } ]);
@@ -278,15 +287,15 @@ describe("config parser", function () {
 
         mockParsing(data);
 
-        configParser.parse(configPath, session, function (configObj) {
+        configParser.parse(configPath, session, extManager, function (configObj) {
             //hasMultiAccess was set to false
             expect(configObj.hasMultiAccess).toEqual(false);
             expect(configObj.accessList).toEqual([ {
-                features : configParser.getGlobalFeatures(),
+                features : extManager.getGlobalFeatures(),
                 uri : 'WIDGET_LOCAL',
                 allowSubDomain : true
             }, {
-                "features" : configParser.getGlobalFeatures(),
+                "features" : extManager.getGlobalFeatures(),
                 "uri" : "http://www.somedomain1.com"
             } ]);
         });
@@ -298,11 +307,11 @@ describe("config parser", function () {
 
         mockParsing(data);
 
-        configParser.parse(configPath, session, function (configObj) {
+        configParser.parse(configPath, session, extManager, function (configObj) {
             //hasMultiAccess was set to true
             expect(configObj.hasMultiAccess).toEqual(true);
             expect(configObj.accessList).toEqual([ {
-                features : configParser.getGlobalFeatures(),
+                features : extManager.getGlobalFeatures(),
                 uri : 'WIDGET_LOCAL',
                 allowSubDomain : true
             } ]);
@@ -315,15 +324,15 @@ describe("config parser", function () {
 
         mockParsing(data);
 
-        configParser.parse(configPath, session, function (configObj) {
+        configParser.parse(configPath, session, extManager, function (configObj) {
             //hasMultiAccess was set to true
             expect(configObj.hasMultiAccess).toEqual(true);
             expect(configObj.accessList).toEqual([ {
-                features : configParser.getGlobalFeatures(),
+                features : extManager.getGlobalFeatures(),
                 uri : 'WIDGET_LOCAL',
                 allowSubDomain : true
             }, {
-                "features" : configParser.getGlobalFeatures(),
+                "features" : extManager.getGlobalFeatures(),
                 "uri" : "http://www.somedomain1.com"
             } ]);
         });
@@ -336,7 +345,7 @@ describe("config parser", function () {
         mockParsing(data);
 
         expect(function () {
-            configParser.parse(configPath, session, function (configObj) {});
+            configParser.parse(configPath, session, extManager, function (configObj) {});
         }).toThrow(localize.translate("EXCEPTION_FEATURE_DEFINED_WITH_WILDCARD_ACCESS_URI"));
     });
 
@@ -347,7 +356,7 @@ describe("config parser", function () {
         mockParsing(data);
 
         expect(function () {
-            configParser.parse(configPath, session, function (configObj) {});
+            configParser.parse(configPath, session, extManager, function (configObj) {});
         }).toThrow(localize.translate("EXCEPTION_FEATURE_DEFINED_WITH_WILDCARD_ACCESS_URI"));
     });
 
@@ -368,7 +377,7 @@ describe("config parser", function () {
         mockParsing(data);
 
         expect(function () {
-            configParser.parse(configPath, session, function (configObj) {});
+            configParser.parse(configPath, session, extManager, function (configObj) {});
         }).toThrow(localize.translate("EXCEPTION_INVALID_ACCESS_URI_NO_PROTOCOL", data['access']['@'].uri));
     });
 
@@ -389,7 +398,7 @@ describe("config parser", function () {
         mockParsing(data);
 
         expect(function () {
-            configParser.parse(configPath, session, function (configObj) {});
+            configParser.parse(configPath, session, extManager, function (configObj) {});
         }).toThrow(localize.translate("EXCEPTION_INVALID_ACCESS_URI_NO_URN", data['access']['@'].uri));
     });
 
@@ -410,7 +419,7 @@ describe("config parser", function () {
         mockParsing(data);
         
         expect(function () {
-            configParser.parse(configPath, session, function (configObj) {});
+            configParser.parse(configPath, session, extManager, function (configObj) {});
         }).not.toThrow();
     });
     
@@ -420,7 +429,7 @@ describe("config parser", function () {
         
         mockParsing(data);
         
-        configParser.parse(configPath, session, function (configObj) {
+        configParser.parse(configPath, session, extManager, function (configObj) {
             expect(configObj.version).toEqual("1.0.0");
             expect(configObj.buildId).toEqual("50");
         });
@@ -434,7 +443,7 @@ describe("config parser", function () {
         
         mockParsing(data);
         
-        configParser.parse(configPath, session, function (configObj) {
+        configParser.parse(configPath, session, extManager, function (configObj) {
             expect(configObj.buildId).toEqual("100");
         });
     });
@@ -448,7 +457,7 @@ describe("config parser", function () {
         
         mockParsing(data);
         
-        configParser.parse(configPath, session, function (configObj) {
+        configParser.parse(configPath, session, extManager, function (configObj) {
             expect(configObj.version).toEqual("1.0.0");
             expect(configObj.buildId).toEqual("100");
         });
@@ -462,13 +471,13 @@ describe("config parser", function () {
         
         //Should throw an EXCEPTION_INVALID_AUTHOR error
         expect(function () {
-            configParser.parse(configPath, session, {});
+            configParser.parse(configPath, session, extManager, {});
         }).toThrow(localize.translate("EXCEPTION_INVALID_AUTHOR"));
     });
 
     it("can parse a standard rim:invoke-target element", function () {
 
-        configParser.parse(configPath, session, function (configObj) {
+        configParser.parse(configPath, session, extManager, function (configObj) {
             var invokeTarget = configObj["invoke-target"][0];
 
             expect(invokeTarget).toBeDefined();
@@ -521,7 +530,7 @@ describe("config parser", function () {
         mockParsing(data);
 
         expect(function () {
-            configParser.parse(configPath, session, function (configObj) {});
+            configParser.parse(configPath, session, extManager, function (configObj) {});
         }).not.toThrow();
     });
 
@@ -542,7 +551,7 @@ describe("config parser", function () {
         mockParsing(data);
 
         expect(function () {
-            configParser.parse(configPath, session, function (configObj) {});
+            configParser.parse(configPath, session, extManager, function (configObj) {});
         }).not.toThrow();
 
     });
@@ -556,7 +565,7 @@ describe("config parser", function () {
         mockParsing(data);
 
         expect(function () {
-            configParser.parse(configPath, session, function (configObj) {});
+            configParser.parse(configPath, session, extManager, function (configObj) {});
         }).toThrow(localize.translate("EXCEPTION_INVOKE_TARGET_INVALID_ID"));
     });
 
@@ -572,7 +581,7 @@ describe("config parser", function () {
         mockParsing(data);
 
         expect(function () {
-            configParser.parse(configPath, session, function (configObj) {});
+            configParser.parse(configPath, session, extManager, function (configObj) {});
         }).toThrow(localize.translate("EXCEPTION_INVOKE_TARGET_INVALID_TYPE"));
     });
 
@@ -587,7 +596,7 @@ describe("config parser", function () {
         mockParsing(data);
 
         expect(function () {
-            configParser.parse(configPath, session, function (configObj) {});
+            configParser.parse(configPath, session, extManager, function (configObj) {});
         }).toThrow(localize.translate("EXCEPTION_INVOKE_TARGET_INVALID_TYPE"));
     });
 
@@ -603,7 +612,7 @@ describe("config parser", function () {
         mockParsing(data);
 
         expect(function () {
-            configParser.parse(configPath, session, function (configObj) {});
+            configParser.parse(configPath, session, extManager, function (configObj) {});
         }).toThrow(localize.translate("EXCEPTION_INVOKE_TARGET_INVALID_TYPE"));
     });
 
@@ -638,7 +647,7 @@ describe("config parser", function () {
         mockParsing(data);
 
         expect(function () {
-            configParser.parse(configPath, session, function (configObj) {});
+            configParser.parse(configPath, session, extManager, function (configObj) {});
         }).toThrow(localize.translate("EXCEPTION_INVOKE_TARGET_ACTION_INVALID"));
     });
 
@@ -668,7 +677,7 @@ describe("config parser", function () {
         mockParsing(data);
 
         expect(function () {
-            configParser.parse(configPath, session, function (configObj) {});
+            configParser.parse(configPath, session, extManager, function (configObj) {});
         }).toThrow(localize.translate("EXCEPTION_INVOKE_TARGET_MIME_TYPE_INVALID"));
     });
 
@@ -680,7 +689,7 @@ describe("config parser", function () {
             mockParsing(data);
 
             expect(function () {
-                configParser.parse(configPath, session, function (configObj) {});
+                configParser.parse(configPath, session, extManager, function (configObj) {});
             }).toThrow(localize.translate("EXCEPTION_INVALID_SPLASH_SRC"));
         });
 
@@ -695,7 +704,7 @@ describe("config parser", function () {
             mockParsing(data);
 
             expect(function () {
-                configParser.parse(configPath, session, function (configObj) {});
+                configParser.parse(configPath, session, extManager, function (configObj) {});
             }).toThrow(localize.translate("EXCEPTION_INVALID_SPLASH_SRC"));
         });
 
@@ -712,7 +721,7 @@ describe("config parser", function () {
             mockParsing(data);
 
             expect(function () {
-                configParser.parse(configPath, session, function (configObj) {});
+                configParser.parse(configPath, session, extManager, function (configObj) {});
             }).toThrow(localize.translate("EXCEPTION_INVALID_SPLASH_SRC"));
         });
 
@@ -727,7 +736,7 @@ describe("config parser", function () {
             mockParsing(data);
 
             expect(function () {
-                configParser.parse(configPath, session, function (configObj) {});
+                configParser.parse(configPath, session, extManager, function (configObj) {});
             }).not.toThrow();
         });
 
@@ -746,7 +755,7 @@ describe("config parser", function () {
             mockParsing(data);
 
             expect(function () {
-                configParser.parse(configPath, session, function (configObj) {});
+                configParser.parse(configPath, session, extManager, function (configObj) {});
             }).not.toThrow();
         });
 
@@ -765,7 +774,7 @@ describe("config parser", function () {
             mockParsing(data);
 
             expect(function () {
-                configParser.parse(configPath, session, function (configObj) {});
+                configParser.parse(configPath, session, extManager, function (configObj) {});
             }).toThrow(localize.translate("EXCEPTION_INVALID_SPLASH_SRC_LOCALES"));
         });
     });
@@ -778,7 +787,7 @@ describe("config parser", function () {
             mockParsing(data);
 
             expect(function () {
-                configParser.parse(configPath, session, function (configObj) {});
+                configParser.parse(configPath, session, extManager, function (configObj) {});
             }).toThrow(localize.translate("EXCEPTION_INVALID_ICON_SRC"));
         });
 
@@ -793,7 +802,7 @@ describe("config parser", function () {
             mockParsing(data);
 
             expect(function () {
-                configParser.parse(configPath, session, function (configObj) {});
+                configParser.parse(configPath, session, extManager, function (configObj) {});
             }).toThrow(localize.translate("EXCEPTION_INVALID_ICON_SRC"));
         });
 
@@ -810,7 +819,7 @@ describe("config parser", function () {
             mockParsing(data);
 
             expect(function () {
-                configParser.parse(configPath, session, function (configObj) {});
+                configParser.parse(configPath, session, extManager, function (configObj) {});
             }).toThrow(localize.translate("EXCEPTION_INVALID_ICON_SRC"));
         });
 
@@ -825,7 +834,7 @@ describe("config parser", function () {
             mockParsing(data);
 
             expect(function () {
-                configParser.parse(configPath, session, function (configObj) {});
+                configParser.parse(configPath, session, extManager, function (configObj) {});
             }).not.toThrow();
         });
 
@@ -844,7 +853,7 @@ describe("config parser", function () {
             mockParsing(data);
 
             expect(function () {
-                configParser.parse(configPath, session, function (configObj) {});
+                configParser.parse(configPath, session, extManager, function (configObj) {});
             }).not.toThrow();
         });
 
@@ -863,7 +872,7 @@ describe("config parser", function () {
             mockParsing(data);
 
             expect(function () {
-                configParser.parse(configPath, session, function (configObj) {});
+                configParser.parse(configPath, session, extManager, function (configObj) {});
             }).toThrow(localize.translate("EXCEPTION_INVALID_ICON_SRC_LOCALES"));
         });
     });
