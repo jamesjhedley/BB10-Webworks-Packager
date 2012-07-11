@@ -16,16 +16,8 @@ var testData = require("./test-data"),
                 require: true
             }];
         }
-    };
-    
-function mockParsing(data, error) {
-    spyOn(xml2js, "Parser").andReturn({
-        parseString: function (fileData, callback) {
-            //call callback with no error and altered xml2jsConfig data
-            callback(error, data);
-        }
-    });
-}
+    },
+    mockParsing = testUtilities.mockParsing;
 
 describe("config parser", function () {
     it("parses standard elements in a config.xml", function () {
