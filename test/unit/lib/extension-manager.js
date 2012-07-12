@@ -1,28 +1,32 @@
-var srcPath = __dirname + "/../../../lib/",
-    extManager = require(srcPath + "extension-manager"),
-    packagerUtils = require(srcPath + "packager-utils"),
+var testData = require("./test-data"),
     fs = require("fs"),
     path = require("path"),
-    testData = require("./test-data"),
+    extManager = require(testData.libPath + "/extension-manager"),
+    packagerUtils = require(testData.libPath + "/packager-utils"),
+    configParser = require(testData.libPath + "/config-parser"),
+    configPath = path.resolve("test/config.xml"),
+    testUtilities = require("./test-utilities"),
     session = testData.session,
+    mockParsing = testUtilities.mockParsing,
     result;
 
-function loadModule(path) {
+function loadModule(module) {
     var isGlobal = false,
         namespace,
         dependencies = [];
 
-    if (path.indexOf("app") >= 0) {
+    if (module.indexOf("app") >= 0) {
         namespace = "blackberry.app";
-    } else if (path.indexOf("event") >= 0) {
+    } else if (module.indexOf("event") >= 0) {
         namespace = "blackberry.event";
         isGlobal = true;
-    } else if (path.indexOf("identity") >= 0) {
+    } else if (module.indexOf("identity") >= 0) {
         namespace = "blackberry.identity";
-    } else if (path.indexOf("system") >= 0) {
+    } else if (module.indexOf("system") >= 0) {
         namespace = "blackberry.system";
-    } else {
+    } else if (module.indexOf("complex") >= 0) {
         namespace = "abc.xyz";
+        dependencies = ["app", "system"];
     }
 
     return {
@@ -33,21 +37,63 @@ function loadModule(path) {
 }
 
 describe("Extension manager", function () {
+    spyOn(path, "existsSync").andReturn(true);
+    spyOn(fs, "readdirSync").andReturn(["app", "event", "system", "identity", "complex"]);
+    spyOn(packagerUtils, "loadModule").andCallFake(loadModule);
+
+    result = extManager.initialize(session);
+
     it("initialize returns the actual extension manager object", function () {
-        spyOn(path, "existsSync").andReturn(true);
-        spyOn(fs, "readdirSync").andReturn(["app", "event", "system", "identity"]);
-        spyOn(packagerUtils, "loadModule").andCallFake(loadModule);
-
-        result = extManager.initialize(session);
-
         expect(result.getGlobalFeatures).toBeDefined();
         expect(result.getAllExtensionsToCopy).toBeDefined();
         expect(result.getExtensionBasenameByFeatureId).toBeDefined();
         expect(result.getFeatureIdByExtensionBasename).toBeDefined();
+    });
+
+    it("getGlobalFeatures returns array of all global features", function () {
+        expect(result.getGlobalFeatures().length).toBe(1);
         expect(result.getGlobalFeatures()).toContain({
             id: "blackberry.event",
             version: "1.0.0.0",
             required: true
         });
+    });
+
+    it("getAllExtensionsToCopy returns array of all extensions that need to be copied (including dependencies)", function () {
+        var data = testUtilities.cloneObj(testData.xml2jsConfig);
+
+        data["access"] = {
+            "@": {
+                uri: "http://rim.net",
+                subdomains: "true"
+            },
+            feature: [{
+                "@": { id: "abc.xyz" }
+            }, {
+                "@": { id: "blackberry.system"}
+            }]
+        };
+        
+        mockParsing(data);
+
+        configParser.parse(configPath, session, result, function (config) {
+            var allExt = result.getAllExtensionsToCopy(config.accessList);
+            expect(allExt).toContain("complex");
+            expect(allExt).toContain("app");
+            expect(allExt).toContain("system");
+            expect(allExt).toContain("event");
+            expect(allExt.length).toBe(4);
+        });
+    });
+
+    it("getExtensionBasenameByFeatureId returns extension basename given feature id", function () {
+        expect(result.getExtensionBasenameByFeatureId("abc.xyz")).toBe("complex");
+        expect(result.getExtensionBasenameByFeatureId("blackberry.event")).toBe("event");
+        expect(result.getExtensionBasenameByFeatureId("not.exists")).not.toBeDefined();
+    });
+
+    it("getFeatureIdByExtensionBasename returns feature id given extension basename", function () {
+        expect(result.getFeatureIdByExtensionBasename("system")).toBe("blackberry.system");
+        expect(result.getFeatureIdByExtensionBasename("app")).toBe("blackberry.app");
     });
 });
