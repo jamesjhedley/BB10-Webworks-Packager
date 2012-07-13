@@ -153,10 +153,13 @@ describe("File manager", function () {
         libFiles.push(path.normalize(session.sourcePaths.CHROME + "/lib/policy/whitelist.js"));
         extFiles.push(path.normalize(session.sourcePaths.CHROME + "/ext/blackberry.app/client.js"));
         extFiles.push(path.normalize(session.sourcePaths.CHROME + "/ext/blackberry.app/index.js"));
+        extFiles.push(path.normalize(session.sourcePaths.CHROME + "/ext/blackberry.app/manifest.json"));
         extFiles.push(path.normalize(session.sourcePaths.CHROME + "/ext/blackberry.connection/client.js"));
-        extFiles.push(path.normalize(session.sourcePaths.CHROME + "/ext/blackberry.connection/index.js"));        
+        extFiles.push(path.normalize(session.sourcePaths.CHROME + "/ext/blackberry.connection/index.js"));
+        extFiles.push(path.normalize(session.sourcePaths.CHROME + "/ext/blackberry.connection/manifest.json"));
         extFiles.push(path.normalize(session.sourcePaths.CHROME + "/ext/blackberry.event/client.js"));
-        extFiles.push(path.normalize(session.sourcePaths.CHROME + "/ext/blackberry.event/index.js"));        
+        extFiles.push(path.normalize(session.sourcePaths.CHROME + "/ext/blackberry.event/index.js"));
+        extFiles.push(path.normalize(session.sourcePaths.CHROME + "/ext/blackberry.event/manifest.json"));
 
         spyOn(wrench, "readdirSyncRecursive").andCallFake(function (path) {
             if (/ext$/.test(path)) {
@@ -185,6 +188,9 @@ describe("File manager", function () {
         expect(modulesArr).toContain("lib/plugins/bridge.js");
         expect(modulesArr).toContain("lib/policy/whitelist.js");
         expect(modulesArr).toContain("ext/blackberry.event/index.js");
+        expect(modulesArr).not.toContain("ext/blackberry.app/manifest.json");
+        expect(modulesArr).not.toContain("ext/blackberry.connection/manifest.json");
+        expect(modulesArr).not.toContain("ext/blackberry.event/manifest.json");
     });
 
     it("unzip() should extract 'from' zip file to 'to' directory", function () {
