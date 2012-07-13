@@ -45,6 +45,7 @@ describe("File manager", function () {
             //extension javascript files
             indexJS = path.join(apiDir, "index.js"),
             clientJS = path.join(apiDir, "client.js"),
+            manifestJSON = path.join(apiDir, "manifest.json"),
             subfolderJS = path.join(apiDir, "/subfolder/myjs.js");//Sub folder js file
             
 
@@ -57,6 +58,7 @@ describe("File manager", function () {
             return [
                 indexJS,
                 clientJS,
+                manifestJSON,
                 subfolderJS,
             ];
         });
@@ -69,6 +71,7 @@ describe("File manager", function () {
         //Javascript files are copied
         expect(packager_utils.copyFile).toHaveBeenCalledWith(indexJS, toDir, apiDir);
         expect(packager_utils.copyFile).toHaveBeenCalledWith(clientJS, toDir, apiDir);
+        expect(packager_utils.copyFile).toHaveBeenCalledWith(manifestJSON, toDir, apiDir);
         expect(packager_utils.copyFile).toHaveBeenCalledWith(subfolderJS, toDir, apiDir);
     });
     
