@@ -53,9 +53,7 @@ describe("Extension manager", function () {
     it("getGlobalFeatures returns array of all global features", function () {
         expect(result.getGlobalFeatures().length).toBe(1);
         expect(result.getGlobalFeatures()).toContain({
-            id: "blackberry.event",
-            version: "1.0.0.0",
-            required: true
+            id: "blackberry.event"
         });
     });
 

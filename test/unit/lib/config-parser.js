@@ -11,9 +11,7 @@ var testData = require("./test-data"),
     extManager = {
         getGlobalFeatures: function () {
             return [{
-                id: "blackberry.event",
-                version: "1.0.0.0",
-                require: true
+                id: "blackberry.event"
             }];
         }
     },
