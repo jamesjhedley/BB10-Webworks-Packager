@@ -1,5 +1,5 @@
 var testData = require("./test-data"),
-    fs = require("fs"),
+    fs = require("fsext"),
     path = require("path"),
     extManager = require(testData.libPath + "/extension-manager"),
     packagerUtils = require(testData.libPath + "/packager-utils"),
@@ -71,8 +71,10 @@ describe("Extension manager", function () {
                 "@": { id: "blackberry.system"}
             }]
         };
-        
+
         mockParsing(data);
+
+        spyOn(fs, "copySync");
 
         configParser.parse(configPath, session, result, function (config) {
             var allExt = result.getAllExtensionsToCopy(config.accessList);
